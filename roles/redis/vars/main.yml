@@ -1,0 +1,8 @@
+---
+# vars file for redis
+
+sysctlName: 50-redis.conf
+somaxconn: 511
+
+masterNode: redistest01
+masterPort: 6379

@@ -1,0 +1,6 @@
+[redis]
+redistest01 master=True
+redistest02 master=False
+
+[client]
+redisclient 

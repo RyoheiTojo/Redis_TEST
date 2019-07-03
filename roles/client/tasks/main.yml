@@ -1,0 +1,17 @@
+---
+# tasks file for client
+
+- name: Install Packages
+  yum: name="{{ item }}"
+  with_items:
+    - python3-devel
+
+- name: Install pip module
+  shell: "if [ -n \"`python3 -m pip list | grep -i '^{{ item }} '`\" ]; then exit 10; else python3 -m pip install {{ item }};fi"
+  register: pip_install
+  changed_when: pip_install.rc!=10
+  failed_when: pip_install.rc not in [0, 10]
+  with_items:
+    - redis
+
+

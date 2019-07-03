@@ -1,0 +1,74 @@
+---
+# tasks file for redis
+
+- name: Enable to install redis.
+  shell: "amazon-linux-extras enable redis4.0"
+  become: yes
+
+- name: Install redis
+  yum: name=redis state=latest
+
+###### Setting for resolv 3 warning when redis boots
+- name: SystemConfig for redis (net.core.somaxconn)
+  sysctl:
+    name: net.core.somaxconn
+    value: "{{ somaxconn }}"
+    sysctl_file: "/etc/sysctl.d/{{ sysctlName }}"
+    state: present
+
+- name: SystemConfig for redis (vm.overcommit_memory)
+  sysctl:
+    name: vm.overcommit_memory
+    value: 1
+    sysctl_file: "/etc/sysctl.d/{{ sysctlName }}"
+    state: present
+
+- name: THP off
+  shell: "echo never > /sys/kernel/mm/transparent_hugepage/enabled"
+
+- name: THP off (parmanent)
+  lineinfile:
+    dest: /etc/rc.local
+    line: "echo never > /sys/kernel/mm/transparent_hugepage/enabled"
+
+- name: chmod 755 rc.local
+  file:
+    name: /etc/rc.d/rc.local
+    mode: 0755
+
+- name: boot redis after rc.local
+  replace: 
+    dest: "/usr/lib/systemd/system/redis.service"
+    regexp: '^After=network.target$' 
+    replace: 'After=network.target rc-local.service' 
+    backup: yes
+
+###### redic config
+- name: bind setting
+  replace: 
+    dest: "/etc/redis.conf"
+    regexp: '^bind 127.0.0.1$' 
+    replace: '#bind 127.0.0.1'
+    backup: yes
+
+- name: protect mode off
+  replace: 
+    dest: "/etc/redis.conf"
+    regexp: '^protected-mode yes$' 
+    replace: 'protected-mode no'
+    backup: yes
+
+###### replication setting
+- name: slave setting
+  lineinfile:
+    dest: /etc/redis.conf
+    line: "slaveof {{ masterNode }} {{ masterPort }}"
+  when: not master
+
+###### restart and enable redis
+- name: CentOS7 start redis
+  systemd: 
+    name: redis.service 
+    state: restarted
+    enabled: yes
+

@@ -1,0 +1,5 @@
+- name: Construct Client
+  hosts: client
+  become: yes
+  roles:
+    - client

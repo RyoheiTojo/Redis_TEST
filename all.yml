@@ -1,0 +1,5 @@
+- name: Setup OS
+  hosts: all
+  become: yes
+  roles:
+    - centos
